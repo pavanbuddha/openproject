@@ -32,7 +32,6 @@ execute() {
 }
 
 cleanup() {
-	execute "ls -al tmp"
         rm -rf tmp/cache/parallel*
 }
 
