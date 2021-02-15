@@ -94,8 +94,8 @@ namespace :parallel do
     parallel_options = ""
     rspec_options = ""
 
-    if runtime_filename
-      parallel_options += " --runtime-log tmp/#{runtime_filename}"
+    if runtime_filename && File.readable?("tmp/#{runtime_filename}")
+      parallel_options += " --group-by runtime --runtime-log tmp/#{runtime_filename} --allowed-missing 75"
     end
     if parsed_options[:seed]
       rspec_options += "--seed #{parsed_options[:seed]}"
@@ -104,17 +104,7 @@ namespace :parallel do
       rspec_options += " #{additional_options}"
     end
     group_options += " -o '#{rspec_options}'" if rspec_options.length.positive?
-    if runtime_filename
-      File.open(Rails.root.join(".rspec_parallel").to_s, "w+") do |f|
-        f.puts "--format progress"
-        f.puts "--format ParallelTests::RSpec::SummaryLogger --out tmp/parallel_summary.log"
-        f.puts "--format ParallelTests::RSpec::RuntimeLogger --out tmp/#{runtime_filename}"
-      end
-    end
-    cmd = "bundle exec parallel_test --verbose --allowed-missing 75 --verbose-rerun-command --type rspec #{parallel_options} #{group_options} #{folders} #{pattern}"
-    # if runtime_filename
-    #   cmd += " 2>&1 | tee tmp/#{runtime_filename}"
-    # end
+    cmd = "bundle exec parallel_test --verbose --verbose-rerun-command --type rspec #{parallel_options} #{group_options} #{folders} #{pattern}"
     sh cmd
   end
 

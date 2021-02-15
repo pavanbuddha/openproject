@@ -32,6 +32,7 @@ execute() {
 }
 
 cleanup() {
+	execute "ls -al tmp"
         rm -rf tmp/cache/parallel*
 }
 
@@ -41,7 +42,6 @@ if [ "$1" == "setup-tests" ]; then
 
 	execute "mkdir -p tmp"
 	execute "cp docker/ci/database.yml config/"
-	execute "cp docker/ci/parallel*.log tmp/"
 
 	for i in $(seq 0 $JOBS); do
 		folder="$CAPYBARA_DOWNLOADED_FILE_DIR/$i"
@@ -60,6 +60,8 @@ if [ "$1" == "run-units" ]; then
 	shift
 	execute "cd frontend && npm install && npm run test"
 	execute "time bundle exec rspec -I spec_legacy spec_legacy"
+	execute "cp docker/ci/parallel_units_runtime.log tmp/"
+	execute "ls -al tmp"
 	if ! execute "time bundle exec rake parallel:units" ; then
 		execute "cat tmp/parallel_summary.log"
 		cleanup
@@ -75,9 +77,11 @@ if [ "$1" == "run-features" ]; then
 	execute "cd frontend; npm install ; cd -"
 	execute "bundle exec rake assets:precompile assets:clean"
 	execute "cp -rp config/frontend_assets.manifest.json public/assets/frontend_assets.manifest.json"
+	execute "cp docker/ci/parallel_units_runtime.log tmp/"
+	execute "ls -al tmp"
 	if ! execute "time bundle exec rake parallel:features" ; then
-		cleanup
 		execute "cat tmp/parallel_summary.log"
+		cleanup
 		exit 1
 	else
 		cleanup
